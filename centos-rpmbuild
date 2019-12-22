@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+#  Prereqs: "dnf install podman buildah skopeo jq"
+
+#  Get the list of tags available for the official centos image
+readarray -t TAGLIST < <(skopeo inspect docker://docker.io/library/centos | jq -r '.RepoTags[]')
+#  Remove any version tags aren't a number
+for TAG in ${TAGLIST[@]}; do
+	if [[ $TAG =~ ^[0-9]|\.+$ ]]; then
+                NEWLIST+=( "$TAG" )
+	fi
+done
+TAGLIST=("${NEWLIST[@]}")
+
+#  Get the tag that we want to use
+CENTOS_VERSION=""
+VER="$1"
+while [ "$CENTOS_VERSION" == "" ]; do
+	if [[ " ${TAGLIST[@]} " == *" $VER "* ]]; then
+		CENTOS_VERSION="$VER"
+	else
+		echo "Available CentOS Versions:"
+		echo ${TAGLIST[@]}
+		read -p "Please enter the version you want: " VER
+	fi
+done
+
+set -e
+
+echo "Creating working-copy container from docker.io/library/centos:$CENTOS_VERSION image ..."
+CONTAINER=$(buildah from docker.io/library/centos:$CENTOS_VERSION)
+buildah config --label maintainer="Dave King <dave@daveking.com>" $CONTAINER
+
+echo -e "\nAdding the RPMFusion repositories ..."
+if [ "${CENTOS_VERSION%%.*}" == "8" ]; then
+	CMD="dnf"
+	buildah run $CONTAINER $CMD install -y --nogpgcheck https://dl.fedoraproject.org/pub/epel/epel-release-latest-${CENTOS_VERSION%%.*}.noarch.rpm
+	buildah run $CONTAINER $CMD install -y --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-${CENTOS_VERSION%%.*}.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-${CENTOS_VERSION%%.*}.noarch.rpm
+	buildah run $CONTAINER $CMD install -y --nogpgcheck dnf-plugins-core
+	buildah run $CONTAINER $CMD config-manager --enable PowerTools
+else
+	CMD="yum"
+	buildah run $CONTAINER $CMD localinstall -y --nogpgcheck https://download.fedoraproject.org/pub/epel/epel-release-latest-${CENTOS_VERSION%%.*}.noarch.rpm
+	buildah run $CONTAINER $CMD localinstall -y --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-${CENTOS_VERSION%%.*}.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-${CENTOS_VERSION%%.*}.noarch.rpm
+fi
+
+echo -e "\nInstalling development tools ..."
+buildah run $CONTAINER $CMD groupinstall -y "Development Tools" "RPM Development Tools"
+buildah run $CONTAINER $CMD install -y wget make rpm-build
+
+echo -e "\nUpgrading the installed software ..."
+buildah run $CONTAINER $CMD upgrade -y 
+
+echo -e "\nCleaning out the dnf cache ..."
+buildah run $CONTAINER $CMD clean all
+
+echo -e "\nSaving the localhost/centos-rpmbuild:$CENTOS_VERSION container ..."
+if buildah images --quiet localhost/centos-rpmbuild:$CENTOS_VERSION &>/dev/null; then
+        echo "Deleting previous version of this container ..."
+        buildah rmi localhost/centos-rpmbuild:$CENTOS_VERSION
+fi
+echo "Committing the container ..."
+buildah commit --format docker $CONTAINER localhost/centos-rpmbuild:$CENTOS_VERSION
+
+echo -e "\nRemoving the temporary work-copy container ..."
+buildah rm $CONTAINER
+
+echo -e "\nAll done."
