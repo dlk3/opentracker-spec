@@ -3,7 +3,7 @@
 A collection of tools for building specific application packages that I use on
 CentOS.  See the README.md files in each folder for additional details.
 
-* transmission
+* transmission and libnatpmp, a pre-req for transmission
 * opentracker
 
 The centos-rpmbuild script found here will create the podman image that is used
