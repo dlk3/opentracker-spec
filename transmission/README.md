@@ -1,4 +1,4 @@
-#  trasnmission RPM Packages For CentOS
+#  transmission RPM Packages For CentOS
 
 This folder contains the CentOS 7 source rpms for two packages,
 transmission and libnatpmp, which is a pre-req for transmission.
