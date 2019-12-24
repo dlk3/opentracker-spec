@@ -13,6 +13,10 @@ VERSION=$(sed -n 's/^Version:[[:space:]]*//p' "$SPECFILE")
 RELEASE=$(sed -n 's/^Release:[[:space:]]*//;s/%{?dist}//p' "$SPECFILE")
 SOURCE0=$(sed -n 's/^Source0:[[:space:]]*//p' "$SPECFILE")
 SOURCE0=$(echo $SOURCE0 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
+SOURCE1=$(sed -n 's/^Source1:[[:space:]]*//p' "$SPECFILE")
+SOURCE1=$(echo $SOURCE1 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
+SOURCE2=$(sed -n 's/^Source2:[[:space:]]*//p' "$SPECFILE")
+SOURCE2=$(echo $SOURCE2 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
 
 if [ $(cat /etc/hostname) == "fang.localdomain" ]; then
 
@@ -28,9 +32,11 @@ if [ $(cat /etc/hostname) == "fang.localdomain" ]; then
 	rm -fr libowfat opentracker
 	cd "$MY_PATH"
 
-	echo "Building $NAME in centos-rpmbuild:8 container ..."
+	echo -e "\nBuilding $NAME in centos-rpmbuild:8 container ..."
 	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} localhost/centos-rpmbuild:8 "$(realpath "$0")"
-	#podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} localhost/centos-rpmbuild:8 /bin/sh
+	
+	echo -e "\nBuilding $NAME in fedora-rpmbuild:31 container ..."
+	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} localhost/fedora-rpmbuild:31 "$(realpath "$0")"
 	
 else
 
@@ -38,15 +44,18 @@ else
 	dnf upgrade -y
 	dnf install -y zlib-devel
 
-	echo -e "\nGet the Source0 file ..."
+	echo -e "\nGet the source files ..."
 	mkdir -p /root/rpmbuild/SOURCES
-	cp /home/dlk/rpmbuild/SOURCES/$SOURCE0 /root/rpmbuild/SOURCES/
+	cp /home/dlk/rpmbuild/SOURCES/$SOURCE0 \
+		/home/dlk/src/centos-rpms/opentracker/$SOURCE1 \
+		/home/dlk/src/centos-rpms/opentracker/$SOURCE2 \
+		/root/rpmbuild/SOURCES/
 	
-	#  Build the packages ...
+	#  Build the package ...
 	rpmbuild -ba "$SPECFILE"
 
 	echo -e "\nCopying RPM files to host system ..."
-	mv ${HOME}/rpmbuild/RPMS/x86_64/${NAME}-${VERSION}-${RELEASE}.*.x86_64.rpm /home/dlk/rpmbuild/RPMS/x86_64/
-	mv ${HOME}/rpmbuild/SRPMS/${NAME}-${VERSION}-${RELEASE}.*.src.rpm /home/dlk/rpmbuild/SRPMS/
+	mv -v ${HOME}/rpmbuild/RPMS/x86_64/${NAME}-${VERSION}-${RELEASE}.*.x86_64.rpm /home/dlk/rpmbuild/RPMS/x86_64/
+	mv -v ${HOME}/rpmbuild/SRPMS/${NAME}-${VERSION}-${RELEASE}.*.src.rpm /home/dlk/rpmbuild/SRPMS/
 	
 fi
