@@ -1,0 +1,65 @@
+#!/usr/bin/env sh
+
+#  This Source Code Form is subject to the terms of the Mozilla Public
+#  License, v. 2.0. If a copy of the MPL was not distributed with this
+#  file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+SPECFILE="opentracker.spec"
+
+set -e
+
+#  Get the full path to the spec file
+SPECFILE=$(dirname "$(realpath "$0")")/$SPECFILE
+
+#  Parse the package name, version and release out of the spec file
+NAME=$(sed -n 's/^Name:[[:space:]]*//p' "$SPECFILE")
+VERSION=$(sed -n 's/^Version:[[:space:]]*//p' "$SPECFILE")
+RELEASE=$(sed -n 's/^Release:[[:space:]]*//;s/%{?dist}//p' "$SPECFILE")
+SOURCE0=$(sed -n 's/^Source0:[[:space:]]*//p' "$SPECFILE")
+SOURCE0=$(echo $SOURCE0 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
+SOURCE1=$(sed -n 's/^Source1:[[:space:]]*//p' "$SPECFILE")
+SOURCE1=$(echo $SOURCE1 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
+SOURCE2=$(sed -n 's/^Source2:[[:space:]]*//p' "$SPECFILE")
+SOURCE2=$(echo $SOURCE2 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
+
+if [ $(cat /etc/hostname) == "fang.localdomain" ]; then
+
+	echo "Fetching source code and building Source0 tar.gz file ..."
+	MY_PATH=$(dirname "$(realpath "$0")")
+	rm -fr /tmp/${NAME}-$VERSION
+	mkdir /tmp/${NAME}-$VERSION
+	cd /tmp/${NAME}-$VERSION
+	cvs -d :pserver:cvs@cvs.fefe.de:/cvs -z9 co libowfat
+	git clone git://erdgeist.org/opentracker
+	cd /tmp
+	tar -czf /home/dlk/rpmbuild/SOURCES/${SOURCE0} ${NAME}-$VERSION
+	rm -fr libowfat opentracker
+	cd "$MY_PATH"
+
+	echo -e "\nBuilding $NAME in centos-rpmbuild:8 container ..."
+	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} localhost/centos-rpmbuild:8 "$(realpath "$0")"
+	
+	echo -e "\nBuilding $NAME in fedora-rpmbuild:31 container ..."
+	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} localhost/fedora-rpmbuild:31 "$(realpath "$0")"
+	
+else
+
+	#echo -e "\nUpdate system software ..."
+	dnf upgrade -y
+	dnf install -y zlib-devel
+
+	echo -e "\nGet the source files ..."
+	mkdir -p /root/rpmbuild/SOURCES
+	cp /home/dlk/rpmbuild/SOURCES/$SOURCE0 \
+		/home/dlk/src/centos-rpms/opentracker/$SOURCE1 \
+		/home/dlk/src/centos-rpms/opentracker/$SOURCE2 \
+		/root/rpmbuild/SOURCES/
+	
+	#  Build the package ...
+	rpmbuild -ba "$SPECFILE"
+
+	echo -e "\nCopying RPM files to host system ..."
+	mv -v ${HOME}/rpmbuild/RPMS/x86_64/${NAME}-${VERSION}-${RELEASE}.*.x86_64.rpm /home/dlk/rpmbuild/RPMS/x86_64/
+	mv -v ${HOME}/rpmbuild/SRPMS/${NAME}-${VERSION}-${RELEASE}.*.src.rpm /home/dlk/rpmbuild/SRPMS/
+	
+fi

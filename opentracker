@@ -1,0 +1,8 @@
+#  This Source Code Form is subject to the terms of the Mozilla Public
+#  License, v. 2.0. If a copy of the MPL was not distributed with this
+#  file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+#  To specify options on the opentracker command line, include them here. 
+#  See http://erdgeist.org/arts/software/opentracker/#invocation for
+#  details.
+#OPTS="-p 6969/tcp -p 6969/udp"
