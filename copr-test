@@ -4,62 +4,77 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-SPECFILE="opentracker.spec"
-
 set -e
-
-#  Get the full path to the spec file
-SPECFILE=$(dirname "$(realpath "$0")")/$SPECFILE
-
-#  Parse the package name, version and release out of the spec file
-NAME=$(sed -n 's/^Name:[[:space:]]*//p' "$SPECFILE")
-VERSION=$(sed -n 's/^Version:[[:space:]]*//p' "$SPECFILE")
-RELEASE=$(sed -n 's/^Release:[[:space:]]*//;s/%{?dist}//p' "$SPECFILE")
-SOURCE0=$(sed -n 's/^Source0:[[:space:]]*//p' "$SPECFILE")
-SOURCE0=$(echo $SOURCE0 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
-SOURCE1=$(sed -n 's/^Source1:[[:space:]]*//p' "$SPECFILE")
-SOURCE1=$(echo $SOURCE1 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
-SOURCE2=$(sed -n 's/^Source2:[[:space:]]*//p' "$SPECFILE")
-SOURCE2=$(echo $SOURCE2 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
 
 if [ $(cat /etc/hostname) == "fang.localdomain" ]; then
 
-	echo "Fetching source code and building Source0 tar.gz file ..."
-	MY_PATH=$(dirname "$(realpath "$0")")
-	rm -fr /tmp/${NAME}-$VERSION
-	mkdir /tmp/${NAME}-$VERSION
-	cd /tmp/${NAME}-$VERSION
-	cvs -d :pserver:cvs@cvs.fefe.de:/cvs -z9 co libowfat
-	git clone git://erdgeist.org/opentracker
-	cd /tmp
-	tar -czf /home/dlk/rpmbuild/SOURCES/${SOURCE0} ${NAME}-$VERSION
-	rm -fr libowfat opentracker
-	cd "$MY_PATH"
-
-	echo -e "\nBuilding $NAME in centos-rpmbuild:8 container ..."
-	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} localhost/centos-rpmbuild:8 "$(realpath "$0")"
-	
-	echo -e "\nBuilding $NAME in fedora-rpmbuild:31 container ..."
-	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} localhost/fedora-rpmbuild:31 "$(realpath "$0")"
+	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} docker.io/library/centos:8 "$(realpath "$0")"
 	
 else
 
-	#echo -e "\nUpdate system software ..."
+	#  Make the container look like a COPR environment
+	dnf install -y --nogpgcheck https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+	dnf install -y --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm
+	dnf install -y --nogpgcheck dnf-plugins-core
+	dnf config-manager --enable PowerTools
+	dnf groupinstall -y "Development Tools" "RPM Development Tools"
+	dnf install -y --nogpgcheck dnf-plugins-core rpm-build
 	dnf upgrade -y
-	dnf install -y zlib-devel
+	mkdir /tmp/copr-test
+	cd /tmp/copr-test
 
-	echo -e "\nGet the source files ..."
-	mkdir -p /root/rpmbuild/SOURCES
-	cp /home/dlk/rpmbuild/SOURCES/$SOURCE0 \
-		/home/dlk/src/centos-rpms/opentracker/$SOURCE1 \
-		/home/dlk/src/centos-rpms/opentracker/$SOURCE2 \
-		/root/rpmbuild/SOURCES/
+	#  COPR: Installing packages required by the custom script
+	dnf install -y git cvs
+	
+	#  COPR: The custom script that gets/creates the sources and the spec file
+	git clone https://github.com/dlk3/opentracker-spec.git
+	mv opentracker-spec/opentracker* .
+	rm -fr opentracker-spec
+	NAME=$(sed -n 's/^Name:[[:space:]]*//p' 'opentracker.spec')
+	VERSION=$(sed -n 's/^Version:[[:space:]]*//p' 'opentracker.spec')
+	mkdir ${NAME}-${VERSION}
+	cd ${NAME}-${VERSION}
+	cvs -d :pserver:cvs@cvs.fefe.de:/cvs -z9 co libowfat
+	git clone git://erdgeist.org/opentracker
+	cd ..
+	tar -czf ${NAME}-${VERSION}.tar.gz ${NAME}-${VERSION}
+	rm -fr ${NAME}-${VERSION}
+
+	#  Parse the package name, version, release, sources and architecture
+	#  out of the spec file
+	SPECFILE="opentracker.spec"
+	NAME=$(sed -n 's/^Name:[[:space:]]*//p' "$SPECFILE")
+	VERSION=$(sed -n 's/^Version:[[:space:]]*//p' "$SPECFILE")
+	RELEASE=$(sed -n 's/^Release:[[:space:]]*//;s/%{?dist}//p' "$SPECFILE")
+	SOURCE0=$(sed -n 's/^Source0:[[:space:]]*//p' "$SPECFILE")
+	SOURCE0=$(echo $SOURCE0 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
+	SOURCE1=$(sed -n 's/^Source1:[[:space:]]*//p' "$SPECFILE")
+	SOURCE1=$(echo $SOURCE1 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
+	SOURCE2=$(sed -n 's/^Source2:[[:space:]]*//p' "$SPECFILE")
+	SOURCE2=$(echo $SOURCE2 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
+	ARCH=$(sed -n 's/^BuildArch:[[:space:]]*//p' "$SPECFILE")
+
+	#  Move the source files into place in the /root/rpmbuild tree
+	mv /tmp/copr-test/${SPECFILE} ${HOME}/rpmbuild/SPEC/
+	mv /tmp/copr-test/${NAME}-${VERSION}.tar.gz ${HOME}/rpmbuild/SOURCES/
+	mv /tmp/copr-test/${SOURCE1} ${HOME}/rpmbuild/SOURCES/
+	mv /tmp/copr-test/${SOURCE2} ${HOME}/rpmbuild/SOURCES/
+
+	#  Install the BuildRequires packages listed in the spec file
+	PACKAGES=''
+	oIFS=$IFS
+	IFS=$'\n'
+	for LINE in `grep ^BuildRequires: $SPECFILE`; do 
+		PACKAGES+=`echo $LINE | cut -f2`
+		PACKAGES+=' '
+	done
+	IFS=$oIFS
+	dnf install -y $PACKAGES
 	
 	#  Build the package ...
-	rpmbuild -ba "$SPECFILE"
+	rpmbuild -ba "${HOME}/rpmbuild/SPEC/$SPECFILE"
 
-	echo -e "\nCopying RPM files to host system ..."
-	mv -v ${HOME}/rpmbuild/RPMS/x86_64/${NAME}-${VERSION}-${RELEASE}.*.x86_64.rpm /home/dlk/rpmbuild/RPMS/x86_64/
-	mv -v ${HOME}/rpmbuild/SRPMS/${NAME}-${VERSION}-${RELEASE}.*.src.rpm /home/dlk/rpmbuild/SRPMS/
+	#  Test the package installation
+	dnf install -y ${HOME}/rpmbuild/RPMS/$ARCH/${NAME}-${VERSION}-${RELEASE}.*.${ARCH}.rpm
 	
 fi
