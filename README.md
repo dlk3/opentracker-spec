@@ -1,13 +1,15 @@
-#  RPM Package For CentOS
+#  opentracker RPM Package For CentOS
 
-A collection of tools for building specific application packages that I use on
-CentOS.  See the README.md files in each folder for additional details.
+This folder contains a SPEC file that can be used to create a RPM package
+for the opentracker application.  I created this for myself as there is
+no CentOS package for this application.
 
-* transmission and libnatpmp, a pre-req for transmission
-* opentracker
+opentracker is a highly scalable tracker for the bittorrent protocol.
+See http://erdgeist.org/arts/software/opentracker/ for details. 
 
-The centos-rpmbuild script found here will create the podman image that is used
-by the mkrpms scripts that are in each individual application's folders.
-
-The RPMs that I generated for each of these packages are attached in the 
-[Releases](https://github.com/dlk3/centos-rpms/releases) tab of this repository.
+I have created a Fedora COPR repository to support the installation of
+the RPMs I created.  To install opentracker from this reposditory do:
+```
+$ sudo yum copr enable dlk/opentracker
+$ sudo yum install opentracker
+```
