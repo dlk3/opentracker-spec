@@ -8,7 +8,7 @@ opentracker is a highly scalable tracker for the bittorrent protocol.
 See http://erdgeist.org/arts/software/opentracker/ for details. 
 
 I have created a Fedora COPR repository to support the installation of
-the RPMs I created.  To install opentracker from this reposditory do:
+the RPMs I created.  To install opentracker from this repository do:
 ```
 $ sudo yum copr enable dlk/opentracker
 $ sudo yum install opentracker

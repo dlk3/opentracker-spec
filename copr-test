@@ -14,12 +14,17 @@ else
 
 	#  Make the container look like a COPR environment
 	dnf install -y --nogpgcheck https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-	dnf install -y --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm
-	dnf install -y --nogpgcheck dnf-plugins-core
+	dnf install -y dnf-plugins-core
 	dnf config-manager --enable PowerTools
 	dnf groupinstall -y "Development Tools" "RPM Development Tools"
-	dnf install -y --nogpgcheck dnf-plugins-core rpm-build
+	dnf install -y rpm-build
 	dnf upgrade -y
+	mkdir -p ${HOME}/rpmbuild/BUILD
+	mkdir -p ${HOME}/rpmbuild/BUILDROOT
+	mkdir -p ${HOME}/rpmbuild/RPMS
+	mkdir -p ${HOME}/rpmbuild/SOURCES
+	mkdir -p ${HOME}/rpmbuild/SPECS
+	mkdir -p ${HOME}/rpmbuild/SRPMS
 	mkdir /tmp/copr-test
 	cd /tmp/copr-test
 
@@ -54,25 +59,24 @@ else
 	SOURCE2=$(echo $SOURCE2 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
 	ARCH=$(sed -n 's/^BuildArch:[[:space:]]*//p' "$SPECFILE")
 
-	#  Move the source files into place in the /root/rpmbuild tree
-	mv /tmp/copr-test/${SPECFILE} ${HOME}/rpmbuild/SPEC/
-	mv /tmp/copr-test/${NAME}-${VERSION}.tar.gz ${HOME}/rpmbuild/SOURCES/
-	mv /tmp/copr-test/${SOURCE1} ${HOME}/rpmbuild/SOURCES/
-	mv /tmp/copr-test/${SOURCE2} ${HOME}/rpmbuild/SOURCES/
-
 	#  Install the BuildRequires packages listed in the spec file
 	PACKAGES=''
 	oIFS=$IFS
 	IFS=$'\n'
 	for LINE in `grep ^BuildRequires: $SPECFILE`; do 
-		PACKAGES+=`echo $LINE | cut -f2`
-		PACKAGES+=' '
+		PACKAGES+=`echo $LINE | cut -f2`" "
 	done
 	IFS=$oIFS
 	dnf install -y $PACKAGES
 	
+	#  Move the source files into place in the ${HOME}/rpmbuild tree
+	mv /tmp/copr-test/${SPECFILE} ${HOME}/rpmbuild/SPECS/
+	mv /tmp/copr-test/${NAME}-${VERSION}.tar.gz ${HOME}/rpmbuild/SOURCES/
+	mv /tmp/copr-test/${SOURCE1} ${HOME}/rpmbuild/SOURCES/
+	mv /tmp/copr-test/${SOURCE2} ${HOME}/rpmbuild/SOURCES/
+
 	#  Build the package ...
-	rpmbuild -ba "${HOME}/rpmbuild/SPEC/$SPECFILE"
+	rpmbuild -ba "${HOME}/rpmbuild/SPECS/$SPECFILE"
 
 	#  Test the package installation
 	dnf install -y ${HOME}/rpmbuild/RPMS/$ARCH/${NAME}-${VERSION}-${RELEASE}.*.${ARCH}.rpm
