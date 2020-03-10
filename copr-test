@@ -67,7 +67,7 @@ else
 		PACKAGES+=`echo $LINE | cut -f2`" "
 	done
 	IFS=$oIFS
-	dnf install -y $PACKAGES
+	[ "$PACKAGES" != "" ] && dnf install -y $PACKAGES
 	
 	#  Move the source files into place in the ${HOME}/rpmbuild tree
 	mv /tmp/copr-test/${SPECFILE} ${HOME}/rpmbuild/SPECS/
