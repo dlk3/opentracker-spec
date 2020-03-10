@@ -10,6 +10,6 @@ See http://erdgeist.org/arts/software/opentracker/ for details.
 I have created a Fedora COPR repository to support the installation of
 the RPMs I created.  To install opentracker from this repository do:
 ```
-$ sudo yum copr enable dlk/opentracker
+$ sudo yum copr enable dlk/rpms
 $ sudo yum install opentracker
 ```
