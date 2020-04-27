@@ -60,6 +60,7 @@ else
 	SOURCE1=$(echo $SOURCE1 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
 	SOURCE2=$(sed -n 's/^Source2:[[:space:]]*//p' "$SPECFILE")
 	SOURCE2=$(echo $SOURCE2 | sed "s/%{name}/${NAME}/g;s/%{version}/${VERSION}/g")
+	PATCH0=$(sed -n 's/^Patch0:[[:space:]]*//p' "$SPECFILE")
 	ARCH=$(sed -n 's/^BuildArch:[[:space:]]*//p' "$SPECFILE")
 
 	#  Install the BuildRequires packages listed in the spec file
@@ -77,6 +78,7 @@ else
 	mv /tmp/copr-test/${NAME}-${VERSION}.tar.gz ${HOME}/rpmbuild/SOURCES/
 	mv /tmp/copr-test/${SOURCE1} ${HOME}/rpmbuild/SOURCES/
 	mv /tmp/copr-test/${SOURCE2} ${HOME}/rpmbuild/SOURCES/
+	mv /tmp/copr-test/${PATCH0} ${HOME}/rpmbuild/SOURCES/
 
 	#  Build the package ...
 	rpmbuild -ba "${HOME}/rpmbuild/SPECS/$SPECFILE"
