@@ -6,7 +6,7 @@
 
 Name:		opentracker
 Version:	2018.05.26
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary:	Opentracker Bittorrent Tracker
 
 License:	MPLv2.0
@@ -18,6 +18,7 @@ BuildArch:	x86_64
 
 BuildRequires:	make
 BuildRequires:	zlib-devel
+BuildRequires:	clang
 
 
 %description
@@ -29,6 +30,7 @@ Currently it is deployed as an open and free tracker instance.
 %prep
 %setup
 cp opentracker/README* .
+
 
 %build
 cd libowfat
@@ -55,6 +57,9 @@ install -m 644 -t %{buildroot}/usr/lib/systemd/system %{SOURCE2}
 
 
 %changelog
+* Sun Apr 26 2020 David King <dave@daveking.com> - 2018.05.26-3
+	Added clang to build requirements
+	Switch to libowfat 0.32 to correct compile errors
 * Mon Dec 23 2019 David King <dave@daveking.com> - 2018.05.26-2
 	Added systemd control file
 * Sat Dec 21 2019 David King <dave@daveking.com> - 2018.05.26-1

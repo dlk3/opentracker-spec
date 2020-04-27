@@ -8,14 +8,14 @@ set -e
 
 if [ $(cat /etc/hostname) == "fang.localdomain" ]; then
 
-	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} docker.io/library/centos:8 "$(realpath "$0")"
+	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} docker.io/library/fedora:31 "$(realpath "$0")"
 	
 else
 
 	#  Make the container look like a COPR environment
-	dnf install -y --nogpgcheck https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-	dnf install -y dnf-plugins-core
-	dnf config-manager --enable PowerTools
+	#dnf install -y --nogpgcheck https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+	#dnf install -y dnf-plugins-core
+	#dnf config-manager --enable PowerTools
 	dnf groupinstall -y "Development Tools" "RPM Development Tools"
 	dnf install -y rpm-build
 	dnf upgrade -y
@@ -29,7 +29,7 @@ else
 	cd /tmp/copr-test
 
 	#  COPR: Installing packages required by the custom script
-	dnf install -y git cvs
+	dnf install -y wget git
 	
 	#  COPR: The custom script that gets/creates the sources and the spec file
 	git clone https://github.com/dlk3/opentracker-spec.git
@@ -39,7 +39,8 @@ else
 	VERSION=$(sed -n 's/^Version:[[:space:]]*//p' 'opentracker.spec')
 	mkdir ${NAME}-${VERSION}
 	cd ${NAME}-${VERSION}
-	cvs -d :pserver:cvs@cvs.fefe.de:/cvs -z9 co libowfat
+	wget https://www.fefe.de/libowfat/libowfat-0.32.tar.xz
+	tar --transform="s/^libowfat-0.32/libowfat/" -xvf libowfat-0.32.tar.xz
 	git clone git://erdgeist.org/opentracker
 	cd ..
 	tar -czf ${NAME}-${VERSION}.tar.gz ${NAME}-${VERSION}
