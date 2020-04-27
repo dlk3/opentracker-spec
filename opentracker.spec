@@ -17,7 +17,9 @@ Source2:	%{name}.service
 Patch0:		patch.duplicate_def
 BuildArch:	x86_64
 
-BuildRequires:	make zlib-devel clang
+BuildRequires:	make
+BuildRequires:	zlib-devel
+BuildRequires:	clang
 
 
 %description
