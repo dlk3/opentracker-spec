@@ -14,11 +14,10 @@ URL:		http://erdgeist.org/arts/software/opentracker/
 Source0:	%{name}-%{version}.tar.gz
 Source1:	%{name}
 Source2:	%{name}.service
+Patch0:		patch.duplicate_def
 BuildArch:	x86_64
 
-BuildRequires:	make
-BuildRequires:	zlib-devel
-BuildRequires:	clang
+BuildRequires:	make zlib-devel clang
 
 
 %description
@@ -32,8 +31,11 @@ Currently it is deployed as an open and free tracker instance.
 cp opentracker/README* .
 
 
+%patch0
+
+
 %build
-cd libowfat
+cd libowfat-0.32
 make
 cd ../opentracker
 make
@@ -59,7 +61,8 @@ install -m 644 -t %{buildroot}/usr/lib/systemd/system %{SOURCE2}
 %changelog
 * Sun Apr 26 2020 David King <dave@daveking.com> - 2018.05.26-3
 	Added clang to build requirements
-	Switch to libowfat 0.32 to correct compile errors
+	Upgrade to libowfat-0.32 to correct compile errors
+	Patch libowfat to remove duplicate definition
 * Mon Dec 23 2019 David King <dave@daveking.com> - 2018.05.26-2
 	Added systemd control file
 * Sat Dec 21 2019 David King <dave@daveking.com> - 2018.05.26-1
