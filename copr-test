@@ -41,7 +41,6 @@ else
 	mkdir ${NAME}-${VERSION}
 	cd ${NAME}-${VERSION}
 	wget https://www.fefe.de/libowfat/libowfat-0.32.tar.xz
-	#tar --transform="s/^libowfat-0.32/libowfat/" -xvf libowfat-0.32.tar.xz
 	tar -xvf libowfat-0.32.tar.xz
 	git clone git://erdgeist.org/opentracker
 	cd ..
