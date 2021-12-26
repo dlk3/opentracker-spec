@@ -1,6 +1,6 @@
 diff -ur '--exclude=.git' opentracker.orig/libowfat-0.32/io/io_close.c opentracker/libowfat-0.32/io/io_close.c
---- opentracker.orig/libowfat-0.32/io/io_close.c	2016-10-04 18:43:31.000000000 -0400
-+++ opentracker/libowfat-0.32/io/io_close.c	2020-04-27 08:50:56.396914315 -0400
+--- opentracker.orig/libowfat-0.32/io/io_close.c	2021-12-26 12:14:46.532999703 -0500
++++ opentracker/libowfat-0.32/io/io_close.c	2021-12-26 12:17:49.394708425 -0500
 @@ -11,7 +11,7 @@
  extern void io_dontwantread_really(int64 d,io_entry* e);
  extern void io_dontwantwrite_really(int64 d,io_entry* e);
@@ -10,10 +10,9 @@ diff -ur '--exclude=.git' opentracker.orig/libowfat-0.32/io/io_close.c opentrack
  
  void io_close(int64 d) {
    io_entry* e;
-Only in opentracker.orig: libowfat-0.32.tar.xz
 diff -ur '--exclude=.git' opentracker.orig/opentracker/Makefile opentracker/opentracker/Makefile
---- opentracker.orig/opentracker/Makefile	2020-04-27 08:56:10.995172088 -0400
-+++ opentracker/opentracker/Makefile	2020-04-27 08:37:12.494455377 -0400
+--- opentracker.orig/opentracker/Makefile	2021-12-26 12:14:46.538999628 -0500
++++ opentracker/opentracker/Makefile	2021-12-26 12:15:36.451374200 -0500
 @@ -14,8 +14,8 @@
  
  # Debug flavour
@@ -24,4 +23,4 @@ diff -ur '--exclude=.git' opentracker.orig/opentracker/Makefile opentracker/open
 +LIBOWFAT_LIBRARY=$(PREFIX)/libowfat-0.32
  
  BINDIR?=$(PREFIX)/bin
- 
+ STRIP?=strip
