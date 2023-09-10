@@ -35,7 +35,7 @@ else
 	#  COPR: The custom script that gets/creates the sources and the spec file
 	git clone https://github.com/dlk3/opentracker-spec.git
 	mv opentracker-spec/opentracker* .
-	mv opentracker-spec/patch.duplicate_def .
+	mv opentracker-spec/patch.libowfat-0.33 .
 	rm -fr opentracker-spec
 	NAME=$(sed -n 's/^Name:[[:space:]]*//p' 'opentracker.spec')
 	VERSION=$(sed -n 's/^Version:[[:space:]]*//p' 'opentracker.spec')

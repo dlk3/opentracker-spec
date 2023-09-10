@@ -33,7 +33,7 @@ Currently it is deployed as an open and free tracker instance.
 cp opentracker/README* .
 
  
-%patch -P 0 -p 1
+%patch -P 0 
 
 
 %build
