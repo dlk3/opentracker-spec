@@ -1,0 +1,17 @@
+Common subdirectories: opentracker.orig/.git and opentracker/.git
+diff -u opentracker.orig/Makefile opentracker/Makefile
+--- opentracker.orig/Makefile	2023-09-10 10:23:36.070077369 -0400
++++ opentracker/Makefile	2023-09-10 10:36:06.105142210 -0400
+@@ -14,8 +14,8 @@
+ 
+ # Debug flavour
+ PREFIX?=..
+-LIBOWFAT_HEADERS=$(PREFIX)/libowfat
+-LIBOWFAT_LIBRARY=$(PREFIX)/libowfat
++LIBOWFAT_HEADERS=$(PREFIX)/libowfat-0.33
++LIBOWFAT_LIBRARY=$(PREFIX)/libowfat-0.33
+ 
+ BINDIR?=$(PREFIX)/bin
+ STRIP?=strip
+Common subdirectories: opentracker.orig/opentracker.xcodeproj and opentracker/opentracker.xcodeproj
+Common subdirectories: opentracker.orig/tests and opentracker/tests

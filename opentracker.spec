@@ -6,7 +6,7 @@
 
 Name:		opentracker
 Version:	2018.05.26
-Release:	3%{?dist}
+Release:	4%{?dist}
 Summary:	Opentracker Bittorrent Tracker
 
 License:	MPLv2.0
@@ -14,7 +14,7 @@ URL:		http://erdgeist.org/arts/software/opentracker/
 Source0:	%{name}-%{version}.tar.gz
 Source1:	%{name}
 Source2:	%{name}.service
-Patch0:		patch.duplicate_def
+Patch0:		patch.libowfat-0.33
 BuildArch:	x86_64
 
 BuildRequires:	make
@@ -32,12 +32,12 @@ Currently it is deployed as an open and free tracker instance.
 %setup
 cp opentracker/README* .
 
-
-%patch0 -p1
+ 
+%patch -P 0 -p 1
 
 
 %build
-cd libowfat-0.32
+cd libowfat-0.33
 make
 cd ../opentracker
 make
@@ -61,6 +61,8 @@ install -m 644 -t %{buildroot}/usr/lib/systemd/system %{SOURCE2}
 
 
 %changelog
+* Sun Sep 10 2023 David King <dave@daveking.com> - 2018.05.26-4
+	Upgrade to libowfat-0.33 to correct compile errors
 * Sun Apr 26 2020 David King <dave@daveking.com> - 2018.05.26-3
 	Added clang to build requirements
 	Upgrade to libowfat-0.32 to correct compile errors

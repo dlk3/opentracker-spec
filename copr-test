@@ -8,7 +8,8 @@ set -e
 
 if [ $(cat /etc/hostname) == "fang.localdomain" ]; then
 
-	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} docker.io/library/fedora:32 "$(realpath "$0")"
+	# podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} docker.io/library/fedora:34 "$(realpath "$0")"
+	podman run --interactive --name=rpmbuild --rm --tty --volume=${HOME}:${HOME} docker.io/library/fedora:38 "$(realpath "$0")"
 	
 else
 
@@ -40,8 +41,8 @@ else
 	VERSION=$(sed -n 's/^Version:[[:space:]]*//p' 'opentracker.spec')
 	mkdir ${NAME}-${VERSION}
 	cd ${NAME}-${VERSION}
-	wget https://www.fefe.de/libowfat/libowfat-0.32.tar.xz
-	tar -xvf libowfat-0.32.tar.xz
+	wget https://www.fefe.de/libowfat/libowfat-0.33.tar.xz
+	tar -xvf libowfat-0.33.tar.xz
 	git clone git://erdgeist.org/opentracker
 	cd ..
 	tar -czf ${NAME}-${VERSION}.tar.gz ${NAME}-${VERSION}
