@@ -38,7 +38,7 @@ cp opentracker/README* .
 
 %build
 cd libowfat-0.33
-make
+make pic pie
 cd ../opentracker
 make
 
